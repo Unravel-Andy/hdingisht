@@ -2277,4 +2277,6 @@ allow_errors
 install -y $*
 
 # inject the python script
-final_check
+if [ "${full_host_name,,}" == "${primary_head_node,,}" ]; then
+    final_check
+fi
