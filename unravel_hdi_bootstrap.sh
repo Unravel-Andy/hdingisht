@@ -2252,18 +2252,17 @@ def get_spark_defaults():
 def main():
     sleep(30)
     while(get_latest_req_stat() != 'COMPLETED'):
-        print(get_latest_req_stat())
-        sleep(10)
+        print('Operations Status:' + get_latest_req_stat())
+        sleep(30)
     if get_spark_defaults().find('/var/log/spark') > -1:
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
-        print('Spark Config is not correct rerun unravel_hdi_bootstrap.sh')
+        print('Spark Config is not correct re-run unravel_hdi_bootstrap.sh')
         call('wget https://raw.githubusercontent.com/adrian-unraveldata/azurecfg/master/cfg/unravel_hdi_bootstrap.sh',shell=True)
         call(['chmod', '+x', 'unravel_hdi_bootstrap.sh'])
         call('./unravel_hdi_bootstrap.sh --unravel-server %s --spark-version %s' % (argv.unravel, argv.spark_ver),shell=True)
 if __name__ == '__main__':
     main()
-
 " > /tmp/unravel/final_check.py
     (crontab -l; echo "* * * * * python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ}") | crontab -
 }
