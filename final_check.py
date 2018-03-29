@@ -36,7 +36,7 @@ def main():
         print(get_latest_req_stat())
         sleep(10)
     if get_spark_defaults().find('/var/log/spark') > -1:
-        print('Spark Config is correct')
+        print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
         print('Spark Config is not correct rerun unravel_hdi_bootstrap.sh')
         call('wget https://raw.githubusercontent.com/adrian-unraveldata/azurecfg/master/cfg/unravel_hdi_bootstrap.sh',shell=True)
