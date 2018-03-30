@@ -2223,6 +2223,7 @@ import urllib2,base64,json,argparse,sys
 from time import sleep
 log_dir='/tmp/unravel/'
 sys.stdout = open(log_dir + 'final_check.out','w')
+print('Removing Crontab job')
 call('( crontab -l | grep -v -F \'python %sfinal_check.py\' ) | crontab -' % log_dir ,shell=True)
 parser = argparse.ArgumentParser()
 parser.add_argument('-host','--unravel-host', help='Unravel Server hostname', dest='unravel', required=True)
@@ -2250,9 +2251,11 @@ def get_spark_defaults():
     return (spark_defaults)
 def main():
     sleep(30)
+    print('Checking Ambari Operations')
     while(get_latest_req_stat() != 'COMPLETED'):
         print('Operations Status:' + get_latest_req_stat())
         sleep(30)
+    print('All Operations are completed, Comparing Spark config')
     if get_spark_defaults().find('/var/log/spark') > -1:
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
