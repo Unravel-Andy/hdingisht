@@ -1777,6 +1777,7 @@ function cluster_detect() {
     fi
   fi
   echo "HOST_ROLE=$HOST_ROLE" | tee -a ${OUT_FILE}
+  export HOST_ROLE=$HOST_ROLE
 }
 
 
@@ -2276,6 +2277,6 @@ allow_errors
 install -y $*
 
 # inject the python script
-if [ "${full_host_name,,}" == "${primary_head_node,,}" ]; then
+if [ ${HOST_ROLE} == "master" ]; then
     final_check
 fi
