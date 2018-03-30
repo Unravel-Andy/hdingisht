@@ -2236,7 +2236,7 @@ def am_req(api_name=None, full_api=None):
     if api_name:
         result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET http://{2}:8080/api/v1/clusters/{3}/{4}'.format(argv.username, argv.password, argv.am_host, argv.cluster_name, api_name), shell=True))
     elif full_api:
-        result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET {2}'.format(username,password,full_api), shell=True))
+        result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET {2}'.format(argv.username, argv.password,full_api), shell=True))
     return result
 def get_latest_req_stat():
     cluster_requests = am_req(api_name='requests')
@@ -2262,6 +2262,7 @@ def main():
         call('./unravel_hdi_bootstrap.sh --unravel-server %s --spark-version %s' % (argv.unravel, argv.spark_ver),shell=True)
 if __name__ == '__main__':
     main()
+
 " > /tmp/unravel/final_check.py
     (crontab -l; echo "* * * * * python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ}") | crontab -
 }
