@@ -2219,10 +2219,9 @@ function spark_postinstall_check_impl() {
 function final_check(){
     echo "
 from subprocess import call, check_output
-import urllib2,base64,json,argparse,sys
+import urllib2,base64,json,argparse
 from time import sleep
 log_dir='/tmp/unravel/'
-sys.stdout = open(log_dir + 'final_check.out','w')
 print('Removing Crontab job')
 call('( crontab -l | grep -v -F \'python %sfinal_check.py\' ) | crontab -' % log_dir ,shell=True)
 parser = argparse.ArgumentParser()
@@ -2256,7 +2255,7 @@ def main():
         print('Operations Status:' + get_latest_req_stat())
         sleep(30)
     print('All Operations are completed, Comparing Spark config')
-    if get_spark_defaults().find('/var/log/spark') > -1:
+    if get_spark_defaults().count('/var/log/spark') == 2:
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
         print('Spark Config is not correct re-run unravel_hdi_bootstrap.sh')
@@ -2266,8 +2265,9 @@ def main():
 if __name__ == '__main__':
     main()
 
+
 " > /tmp/unravel/final_check.py
-    (crontab -l; echo "* * * * * python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ}") | crontab -
+    (crontab -l; echo "* * * * * sudo python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log") | crontab -
 }
 
 # dump the contents of env variables and shell settings
