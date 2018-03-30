@@ -2230,13 +2230,11 @@ parser.add_argument('-user','--username', help='ambari username', required=True)
 parser.add_argument('-pass','--password', help='ambari password', required=True)
 parser.add_argument('-c','--cluster_name', help='ambari cluster name', required=True)
 parser.add_argument('-s','--spark_ver', help='spark version', required=True)
+parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
-username = argv.username#'hdinsightwatchdog'
-password = argv.password#'0-!dA0{7&svLAB'
-cluster_name = argv.cluster_name#'ctest21'
 def am_req(api_name=None, full_api=None):
     if api_name:
-        result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET http://localhost:8080/api/v1/clusters/{2}/{3}'.format(username,password,cluster_name,api_name), shell=True))
+        result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET http://{2}:8080/api/v1/clusters/{3}/{4}'.format(argv.username, argv.password, argv.am_host, argv.cluster_name, api_name), shell=True))
     elif full_api:
         result = json.loads(check_output('curl -u {0}:\'{1}\' -s -H \'X-RequestedBy:ambari\' -X GET {2}'.format(username,password,full_api), shell=True))
     return result
@@ -2246,9 +2244,9 @@ def get_latest_req_stat():
     return (am_req(full_api=latest_cluster_req)['Requests']['request_status'])
 def get_spark_defaults():
     try:
-        spark_defaults =check_output('/var/lib/ambari-server/resources/scripts/configs.py -l localhost -u {0} -p \'{1}\' -n {2} -a get -c spark-defaults'.format(username, password,cluster_name), shell=True)
+        spark_defaults =check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults'.format(argv.am_host, argv.username, argv.password, argv.cluster_name), shell=True)
     except:
-        spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l localhost -u {0} -p \'{1}\' -n {2} -a get -c spark2-defaults'.format(username, password,cluster_name), shell=True)
+        spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults'.format(argv.am_host, argv.username, argv.password, argv.cluster_name), shell=True)
     return (spark_defaults)
 def main():
     sleep(30)
@@ -2265,7 +2263,7 @@ def main():
 if __name__ == '__main__':
     main()
 " > /tmp/unravel/final_check.py
-    (crontab -l; echo "* * * * * python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ}") | crontab -
+    (crontab -l; echo "* * * * * python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ}") | crontab -
 }
 
 # dump the contents of env variables and shell settings
