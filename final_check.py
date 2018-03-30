@@ -39,7 +39,7 @@ def main():
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
         print('Spark Config is not correct re-run unravel_hdi_bootstrap.sh')
-        call('wget https://raw.githubusercontent.com/adrian-unraveldata/azurecfg/master/cfg/unravel_hdi_bootstrap.sh',shell=True)
+        call('wget https://raw.githubusercontent.com/unravel-data/public/master/hdi/ARM-templates/HDinsight-spark2.1/unravel_hdi_bootstrap.sh',shell=True)
         call(['chmod', '+x', 'unravel_hdi_bootstrap.sh'])
         call('./unravel_hdi_bootstrap.sh --unravel-server %s --spark-version %s' % (argv.unravel, argv.spark_ver),shell=True)
 if __name__ == '__main__':
