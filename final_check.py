@@ -23,7 +23,7 @@ hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hiv
                     'com.unraveldata.host':argv.unravel}
 mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
 print('Removing Crontab job')
-call('( sudo crontab -l | grep -v -F \'python %sfinal_check.py\' ) | crontab -' % log_dir ,shell=True)
+call('( sudo crontab -l | grep -v -F \'python %sfinal_check.py\' ) | sudo crontab -' % log_dir ,shell=True)
 
 def am_req(api_name=None, full_api=None):
     if api_name:
@@ -129,7 +129,7 @@ def main():
         with open(mapred_site_json,'w') as f:
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
-        # update_config('hadoop-env', set_file=hadoop_env_json)
+        update_config('hadoop-env', set_file=hadoop_env_json)
 
 if __name__ == '__main__':
     main()
