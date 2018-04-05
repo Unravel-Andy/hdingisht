@@ -2287,7 +2287,11 @@ spark_defaults_configs={'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
                         'spark.unravel.server.hostport':argv.unravel+':4043',
                         'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=driver,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1]),
                         'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=executor,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1])}
-mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
+mapred_site_configs = {'yarn.app.mapreduce.am.command-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel,
+                        'mapreduce.task.profile':'true',
+                        'mapreduce.task.profile.maps':'0-5',
+                        'mapreduce.task.profile.reduces':'0-5',
+                        'mapreduce.task.profile.params':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel}
 
 def main():
     print('HDFS_URL: ' + hdfs_url)
@@ -2295,12 +2299,12 @@ def main():
     print('Hadoop-env: ' + hadoop_env_content)
     print('hive-site: ' + str(hive_site_configs))
     print('spark-defaults: ' + str(spark_defaults_configs))
-    print('mapred-site: ' + mapred_site_config)
+    print('mapred-site: ' + str(mapred_site_configs))
     sleep(30)
     print('Checking Ambari Operations')
     while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
         print('Operations Status:' + get_latest_req_stat())
-        sleep(30)
+        sleep(60)
     print('All Operations are completed, Comparing configs')
     # spark-default
     spark_def_ver = get_spark_defaults()
@@ -2368,11 +2372,20 @@ def main():
         mapred_site = json.loads('{' + f.read() + '}')
         f.close()
     # print(mapred_site)
-    if mapred_site_config in mapred_site['properties']['yarn.app.mapreduce.am.command-opts']:
-        print('\nyarn.app.mapreduce.am.command-opts correct')
+    try:
+        check_mapr_site = all(val in mapred_site['properties'][key] for key, val in mapred_site_configs.iteritems())
+    except Exception as e:
+        print(e)
+        check_mapr_site = False
+    if check_mapr_site:
+        print('\nmapred-site correct')
     else:
-        print('\nyarn.app.mapreduce.am.command-opts missing')
-        mapred_site['properties']['yarn.app.mapreduce.am.command-opts'] += ' ' + mapred_site_config
+        print('\nmapr-site missing')
+        for key,val in mapred_site_configs.iteritems():
+            if key == 'yarn.app.mapreduce.am.command-opts' and val not in mapred_site['properties'][key]:
+                mapred_site['properties'][key] += ' ' + val
+            else:
+                mapred_site['properties'][key] = val
         with open(mapred_site_json,'w') as f:
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
