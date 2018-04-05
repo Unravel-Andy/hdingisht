@@ -2229,6 +2229,7 @@ parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
 unrave_server = argv.unravel
 argv.unravel = argv.unravel.split(':')[0]
+argv.spark_ver = argv.spark_ver.split('.')
 log_dir='/tmp/unravel/'
 spark_def_json = log_dir + 'spark-def.json'
 hive_env_json = log_dir + 'hive-env.json'
@@ -2284,8 +2285,8 @@ hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hiv
 spark_defaults_configs={'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
                         'spark.history.fs.logDirectory':hdfs_url + '/var/log/spark/apps',
                         'spark.unravel.server.hostport':argv.unravel+':4043',
-                        'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=driver,libs=spark-'+argv.spark_ver,
-                        'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=executor,libs=spark-'+argv.spark_ver}
+                        'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=driver,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1]),
+                        'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=executor,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1])}
 mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
 
 def main():
