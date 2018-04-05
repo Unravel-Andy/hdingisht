@@ -2278,6 +2278,7 @@ def update_config(config_name,config_key=None,config_value=None, set_file=None):
         print('\Update %s configuration failed' % config_name)
 
 def main():
+    sleep(30)
     print('Checking Ambari Operations')
     while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
         print('Operations Status:' + get_latest_req_stat())
@@ -2287,6 +2288,7 @@ def main():
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
         print('Spark Config is not correct')
+    sleep(5)
     # hive-env
     get_config('hive-env', set_file=hive_env_json)
     with open(hive_env_json,'r') as f:
@@ -2311,6 +2313,7 @@ def main():
         print('\nCustom hive-site configs are correct')
     else:
         print('\nCustom hive-site configs are missing')
+    sleep(5)
     # hadoop-env
     get_config('hadoop-env', set_file=hadoop_env_json)
     with open(hadoop_env_json,'r') as f:
@@ -2343,7 +2346,7 @@ def main():
         with open(mapred_site_json,'w') as f:
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
-        update_config('hadoop-env', set_file=hadoop_env_json)
+        update_config('mapred-site', set_file=mapred_site_json)
 
     restart_services()
 
