@@ -2227,18 +2227,13 @@ parser.add_argument('-c','--cluster_name', help='ambari cluster name', required=
 parser.add_argument('-s','--spark_ver', help='spark version', required=True)
 parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
+unrave_server = argv.unravel
 argv.unravel = argv.unravel.split(':')[0]
 log_dir='/tmp/unravel/'
+spark_def_json = log_dir + 'spark-def.json'
 hive_env_json = log_dir + 'hive-env.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
-hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
-                    'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
-                    'com.unraveldata.hive.hook.tcp': 'true',
-                    'com.unraveldata.host':argv.unravel}
-mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
 
 def am_req(api_name=None, full_api=None):
     if api_name:
@@ -2260,10 +2255,11 @@ def get_config(config_name, set_file=None):
 
 def get_spark_defaults():
     try:
-        spark_defaults =check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults'.format(argv.am_host, argv.username, argv.password, argv.cluster_name), shell=True)
+        spark_defaults =check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+        return ('spark-defaults')
     except:
-        spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults'.format(argv.am_host, argv.username, argv.password, argv.cluster_name), shell=True)
-    return (spark_defaults)
+        spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+        return ('spark2-defaults')
 
 def restart_services():
     call('curl -u {0}:\'{1}\' -i -H \'X-Requested-By: ambari\' -X POST -d \'{{\"RequestInfo\": {{\"command\":\"RESTART\",\"context\" :\"Unravel request: Restart Services\",\"operation_level\":\"host_component\"}},\"Requests/resource_filters\":[{{\"hosts_predicate\":\"HostRoles/stale_configs=true\"}}]}}\' http://{2}:8080/api/v1/clusters/{3}/requests > /tmp/Restart.out 2> /tmp/Restart.err < /dev/null &'.format(argv.username, argv.password, argv.am_host, argv.cluster_name),shell=True)
@@ -2277,6 +2273,21 @@ def update_config(config_name,config_key=None,config_value=None, set_file=None):
     except:
         print('\Update %s configuration failed' % config_name)
 
+core_site = get_config('core-site')
+hdfs_url = json.loads(core_site[core_site.find('properties\":')+13:])['fs.defaultFS']
+hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
+                    'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
+                    'com.unraveldata.hive.hook.tcp': 'true',
+                    'com.unraveldata.host':argv.unravel}
+spark_defaults_configs={'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
+                        'spark.history.fs.logDirectory':hdfs_url + '/var/log/spark/apps',
+                        'spark.unravel.server.hostport':argv.unravel+':4043',
+                        'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=driver,libs=spark-'+argv.spark_ver,
+                        'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=executor,libs=spark-'+argv.spark_ver}
+mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
+
 def main():
     sleep(30)
     print('Checking Ambari Operations')
@@ -2284,10 +2295,22 @@ def main():
         print('Operations Status:' + get_latest_req_stat())
         sleep(30)
     print('All Operations are completed, Comparing configs')
-    if get_spark_defaults().count('/var/log/spark') == 2:
+    # spark-default
+    spark_def_ver = get_spark_defaults()
+    with open(spark_def_json, 'r') as f:
+        spark_def = f.read()
+        f.close()
+    if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
         print('Spark Config is not correct')
+        new_spark_def = json.loads('{' + spark_def + '}')
+        for key,val in spark_defaults_configs.iteritems():
+            new_spark_def['properties'][key] = val
+        with open(spark_def_json, 'w') as f:
+            f.write(json.dumps(new_spark_def)[1:-1])
+            f.close()
+        update_config(spark_def_ver, set_file=spark_def_json)
     sleep(5)
     # hive-env
     get_config('hive-env', set_file=hive_env_json)
@@ -2352,6 +2375,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 " > /tmp/unravel/final_check.py
     ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
