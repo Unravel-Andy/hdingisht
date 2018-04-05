@@ -2232,8 +2232,8 @@ log_dir='/tmp/unravel/'
 hive_env_json = log_dir + 'hive-env.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
-hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
 hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                     'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                     'com.unraveldata.hive.hook.tcp': 'true',
@@ -2311,6 +2311,10 @@ def main():
             f.write(hive_env.replace(content, new_content, 1))
             f.close()
         update_config('hive-env', set_file=hive_env_json)
+        stop_service('HIVE')
+        stop_service('OOZIE')
+        start_service('HIVE')
+        start_service('OOZIE')
     # hive-site
     hive_site = get_config('hive-site')
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
@@ -2349,6 +2353,12 @@ def main():
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
         update_config('hadoop-env', set_file=hadoop_env_json)
+        stop_service('HDFS')
+        stop_service('YARN')
+        stop_service('MAPREDUCE2')
+        start_service('HDFS')
+        start_service('YARN')
+        start_service('MAPREDUCE2')
 
 if __name__ == '__main__':
     main()

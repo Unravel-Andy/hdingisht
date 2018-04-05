@@ -94,6 +94,10 @@ def main():
             f.write(hive_env.replace(content, new_content, 1))
             f.close()
         update_config('hive-env', set_file=hive_env_json)
+        stop_service('HIVE')
+        stop_service('OOZIE')
+        start_service('HIVE')
+        start_service('OOZIE')
     # hive-site
     hive_site = get_config('hive-site')
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
@@ -132,6 +136,12 @@ def main():
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
         update_config('hadoop-env', set_file=hadoop_env_json)
+        stop_service('HDFS')
+        stop_service('YARN')
+        stop_service('MAPREDUCE2')
+        start_service('HDFS')
+        start_service('YARN')
+        start_service('MAPREDUCE2')
 
 if __name__ == '__main__':
     main()
