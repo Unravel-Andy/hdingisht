@@ -51,11 +51,15 @@ def get_spark_defaults():
     return (spark_defaults)
 
 def start_service():
-    call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Start Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
-
+    try:
+        call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Start Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
+    except:
+        pass
 def stop_service(service_name):
-    call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Stop Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"INSTALLED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
-
+    try:
+        call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Stop Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"INSTALLED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
+    except:
+        pass
 def update_config(config_name,config_key=None,config_value=None, set_file=None):
     try:
         if set_file:
