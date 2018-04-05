@@ -2285,8 +2285,8 @@ hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hiv
 spark_defaults_configs={'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
                         'spark.history.fs.logDirectory':hdfs_url + '/var/log/spark/apps',
                         'spark.unravel.server.hostport':argv.unravel+':4043',
-                        'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=driver,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1]),
-                        'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=config=executor,libs=spark-%s.%s' % (argv.spark_ver[0],argv.spark_ver[1])}
+                        'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=driver' % (argv.spark_ver[0],argv.spark_ver[1]),
+                        'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=executor' % (argv.spark_ver[0],argv.spark_ver[1])}
 mapred_site_configs = {'yarn.app.mapreduce.am.command-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel,
                         'mapreduce.task.profile':'true',
                         'mapreduce.task.profile.maps':'0-5',
@@ -2314,6 +2314,7 @@ def main():
     if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
         print(get_spark_defaults() + '\n\nSpark Config is correct')
     else:
+        print(spark_def + '\n')
         print('Spark Config is not correct')
         new_spark_def = json.loads('{' + spark_def + '}')
         for key,val in spark_defaults_configs.iteritems():
@@ -2331,6 +2332,7 @@ def main():
     if hive_env_content.split(' ')[1] in hive_env:
         print('\nAUX_CLASSPATH is in hive')
     else:
+        print(hive_env)
         print('\nAUX_CLASSPATH is missing')
         # print(hive_env)
         content = hive_env[hive_env.find('\"content\": \"')+12:hive_env.find('{% endif %}\"')+11]
@@ -2346,6 +2348,7 @@ def main():
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
         print('\nCustom hive-site configs are correct')
     else:
+        print(hive_site + '\n')
         print('\nCustom hive-site configs are missing')
     sleep(5)
     # hadoop-env
@@ -2356,6 +2359,7 @@ def main():
     if hadoop_env.find(hadoop_env_content.split(' ')[1]) > -1:
         print('\nHADOOP_CLASSPATH is correct')
     else:
+        print(hadoop_env + '\n')
         print('\nHADOOP_CLASSPATH is missing, updating')
         # print(hadoop_env)
         content = hadoop_env[hadoop_env.find('\"content\": \"')+12:hadoop_env.find('{% endif %}\",')+11]
@@ -2380,6 +2384,7 @@ def main():
     if check_mapr_site:
         print('\nmapred-site correct')
     else:
+        print(json.dumps(mapred_site,indent=2) + '\n')
         print('\nmapr-site missing')
         for key,val in mapred_site_configs.iteritems():
             if key == 'yarn.app.mapreduce.am.command-opts' and val not in mapred_site['properties'][key]:
@@ -2395,7 +2400,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 " > /tmp/unravel/final_check.py
     ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
