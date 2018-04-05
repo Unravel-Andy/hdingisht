@@ -2290,6 +2290,12 @@ spark_defaults_configs={'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
 mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
 
 def main():
+    print('HDFS_URL: ' + hdfs_url)
+    print('Hive-env: ' + hive_env_content)
+    print('Hadoop-env: ' + hadoop_env_content)
+    print('hive-site: ' + hive_site_configs)
+    print('spark-defaults: ' + spark_defaults_configs)
+    print('mapred-site: ' + mapred_site_config)
     sleep(30)
     print('Checking Ambari Operations')
     while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
