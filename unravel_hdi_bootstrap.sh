@@ -167,7 +167,7 @@ function fetch_sensor_zip() {
         sudo chmod -R 655 ${AGENT_DST}
         sudo chown -R ${AGENT_DST_OWNER} ${AGENT_DST}
         sudo /bin/cp ${TMP_DIR}/$zip_name  $AGENT_DST/
-        (cd $AGENT_JARS ; sudo unzip ../$zip_name)
+        (cd $AGENT_JARS ; sudo unzip -o ../$zip_name)
     else
         echo "Fetch of $URL failed, RC=$RC"  >&2 | tee -a ${OUT_FILE}
         [ $ALLOW_ERRORS ] && exit 6
