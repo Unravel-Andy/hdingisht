@@ -2352,7 +2352,7 @@ if __name__ == '__main__':
     main()
 
 " > /tmp/unravel/final_check.py
-    ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_HOST} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log &)
+    ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
 }
 
 # dump the contents of env variables and shell settings
