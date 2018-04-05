@@ -2232,15 +2232,13 @@ log_dir='/tmp/unravel/'
 hive_env_json = log_dir + 'hive-env.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
-hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
 hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                     'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                     'com.unraveldata.hive.hook.tcp': 'true',
                     'com.unraveldata.host':argv.unravel}
 mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
-print('Removing Crontab job')
-call('( sudo crontab -l | grep -v -F \'python %sfinal_check.py\' ) | sudo crontab -' % log_dir ,shell=True)
 
 def am_req(api_name=None, full_api=None):
     if api_name:
@@ -2318,7 +2316,7 @@ def main():
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
         print('\nCustom hive-site configs are correct')
     else:
-        print('Custom hive-site configs are missing')
+        print('\nCustom hive-site configs are missing')
     # hadoop-env
     get_config('hadoop-env', set_file=hadoop_env_json)
     with open(hadoop_env_json,'r') as f:
@@ -2327,7 +2325,7 @@ def main():
     if hadoop_env.find(hadoop_env_content.split(' ')[1]) > -1:
         print('\nHADOOP_CLASSPATH is correct')
     else:
-        print('\nHADOOP_CLASSPATH is missing, updating\n')
+        print('\nHADOOP_CLASSPATH is missing, updating')
         # print(hadoop_env)
         content = hadoop_env[hadoop_env.find('\"content\": \"')+12:hadoop_env.find('{% endif %}\",')+11]
         new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
