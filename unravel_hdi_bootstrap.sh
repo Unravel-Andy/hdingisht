@@ -2304,10 +2304,6 @@ def main():
             f.write(hive_env.replace(content, new_content, 1))
             f.close()
         update_config('hive-env', set_file=hive_env_json)
-        stop_service('HIVE')
-        stop_service('OOZIE')
-        start_service('HIVE')
-        start_service('OOZIE')
         sleep(5)
     # hive-site
     hive_site = get_config('hive-site')
