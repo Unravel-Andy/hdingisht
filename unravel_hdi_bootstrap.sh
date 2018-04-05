@@ -2213,7 +2213,8 @@ function spark_postinstall_check_impl() {
 }
 
 function final_check(){
-    echo "
+    echo "Running final_check.py in the background"
+    echo "\
 from subprocess import call, check_output
 import urllib2,base64,json,argparse, re
 from time import sleep
