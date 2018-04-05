@@ -2265,16 +2265,9 @@ def get_spark_defaults():
         spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults'.format(argv.am_host, argv.username, argv.password, argv.cluster_name), shell=True)
     return (spark_defaults)
 
-def start_service():
-    try:
-        call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Start Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"STARTED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
-    except:
-        pass
-def stop_service(service_name):
-    try:
-        call('curl -u {0}:{1} -i -H \'X-Requested-By: ambari\' -X PUT -d \'{\"RequestInfo\": {\"context\" :\"Unravel request: Stop Service {2}\"}, \"Body\": {\"ServiceInfo\": {\"state\": \"INSTALLED\"}}}\' http://{3}:8080/api/v1/clusters/{4}/services/{2}\" > /tmp/Start{2}.out 2> /tmp/Start{2}.err < /dev/null &'.format(argv.username, argv.password, service_name, argv.cm_host, argv.cluster_name),shell=True)
-    except:
-        pass
+def restart_services():
+    call('curl -u {0}:\'{1}\' -i -H \'X-Requested-By: ambari\' -X POST -d \'{{"RequestInfo": {{\"command\":\"RESTART\",\"context\" :\"Unravel request: Restart Services\",\"operation_level\":\"host_component\"}},\"Requests/resource_filters\":[{{\"hosts_predicate\":\"HostRoles/stale_configs=true\"}}]}}\' http://{2}:8080/api/v1/clusters/{3}/requests > /tmp/Restart.out 2> /tmp/Restart.err < /dev/null &'.format(argv.username, argv.password, argv.am_host, argv.cluster_name
+
 def update_config(config_name,config_key=None,config_value=None, set_file=None):
     try:
         if set_file:
@@ -2315,6 +2308,7 @@ def main():
         stop_service('OOZIE')
         start_service('HIVE')
         start_service('OOZIE')
+        sleep(5)
     # hive-site
     hive_site = get_config('hive-site')
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
@@ -2338,6 +2332,7 @@ def main():
             f.write(hadoop_env.replace(content, new_content, 1))
             f.close()
         update_config('hadoop-env', set_file=hadoop_env_json)
+        sleep(5)
     # mapred-site
     get_config('mapred-site',set_file=mapred_site_json)
     with open(mapred_site_json,'r') as f:
@@ -2353,15 +2348,12 @@ def main():
             f.write(json.dumps(mapred_site)[1:-1])
             f.close()
         update_config('hadoop-env', set_file=hadoop_env_json)
-        stop_service('HDFS')
-        stop_service('YARN')
-        stop_service('MAPREDUCE2')
-        start_service('HDFS')
-        start_service('YARN')
-        start_service('MAPREDUCE2')
+
+    restart_services()
 
 if __name__ == '__main__':
     main()
+
 
 " > /tmp/unravel/final_check.py
     ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
