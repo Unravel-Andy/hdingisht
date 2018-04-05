@@ -2232,8 +2232,8 @@ log_dir='/tmp/unravel/'
 hive_env_json = log_dir + 'hive-env.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
-hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
 hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                     'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                     'com.unraveldata.hive.hook.tcp': 'true',
