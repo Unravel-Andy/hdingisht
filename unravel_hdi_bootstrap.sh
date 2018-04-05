@@ -2232,13 +2232,13 @@ log_dir='/tmp/unravel/'
 hive_env_json = log_dir + 'hive-env.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
-hive_env_content = 'export AUX_CLASSPATH=\${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
-hadoop_env_content = 'export HADOOP_CLASSPATH=\${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
+hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-1.2.0-hook.jar'
 hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                     'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                     'com.unraveldata.hive.hook.tcp': 'true',
-                    'com.unraveldata.host':argv.unravel}
-mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
+                    'com.unraveldata.host':argv.unravel.split(':')[0]}
+mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel.split(':')[0]
 print('Removing Crontab job')
 call('( sudo crontab -l | grep -v -F \'python %sfinal_check.py\' ) | sudo crontab -' % log_dir ,shell=True)
 
@@ -2350,6 +2350,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 " > /tmp/unravel/final_check.py
     (sudo crontab -l; echo "* * * * * sudo python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass '${AMBARI_PWD}' -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log") | sudo crontab -

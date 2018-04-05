@@ -20,8 +20,8 @@ hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unr
 hive_site_configs = {'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                     'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                     'com.unraveldata.hive.hook.tcp': 'true',
-                    'com.unraveldata.host':argv.unravel}
-mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
+                    'com.unraveldata.host':argv.unravel.split(':')[0]}
+mapred_site_config = '-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel.split(':')[0]
 print('Removing Crontab job')
 call('( sudo crontab -l | grep -v -F \'python %sfinal_check.py\' ) | sudo crontab -' % log_dir ,shell=True)
 
