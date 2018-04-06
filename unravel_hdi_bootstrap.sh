@@ -2802,5 +2802,6 @@ install -y $*
 
 # inject the python script
 if [ ${HOST_ROLE} == "master" ]; then
+    configs_py
     final_check
 fi
