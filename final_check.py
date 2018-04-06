@@ -33,16 +33,16 @@ def get_latest_req_stat():
 
 def get_config(config_name, set_file=None):
     if set_file:
-        return check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c {4} -f {5}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, set_file), shell=True)
+        return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c {4} -f {5}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, set_file), shell=True)
     else:
-        return check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name), shell=True)
+        return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name), shell=True)
 
 def get_spark_defaults():
     try:
-        spark_defaults =check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+        spark_defaults =check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark-defaults')
     except:
-        spark_defaults = check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+        spark_defaults = check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark2-defaults')
 
 def restart_services():
@@ -51,9 +51,9 @@ def restart_services():
 def update_config(config_name,config_key=None,config_value=None, set_file=None):
     try:
         if set_file:
-            return check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a set -c {4} -f {5}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, set_file), shell=True)
+            return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a set -c {4} -f {5}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, set_file), shell=True)
         else:
-            return check_output('/var/lib/ambari-server/resources/scripts/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a set -c {4} -k {5} -v {6}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, config_key, config_value), shell=True)
+            return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a set -c {4} -k {5} -v {6}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, config_key, config_value), shell=True)
     except:
         print('\Update %s configuration failed' % config_name)
 
@@ -101,7 +101,10 @@ def main():
         print('Spark Config is not correct')
         new_spark_def = json.loads('{' + spark_def + '}')
         for key,val in spark_defaults_configs.iteritems():
-            new_spark_def['properties'][key] = val
+            if key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions':
+                new_spark_def['properties'][key] += ' ' + val
+            else:
+                new_spark_def['properties'][key] = val
         with open(spark_def_json, 'w') as f:
             f.write(json.dumps(new_spark_def)[1:-1])
             f.close()
@@ -145,7 +148,7 @@ def main():
         print(hadoop_env + '\n')
         print('\nHADOOP_CLASSPATH is missing, updating')
         # print(hadoop_env)
-        content = hadoop_env[hadoop_env.find('\"content\": \"')+12:hadoop_env.find('{% endif %}\",')+11]
+        content = hadoop_env[hadoop_env.find('\"content\": \"')+12:hadoop_env.find('hdfs_user_nofile_limit')-6]
         new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
         sleep(2)
         with open(hadoop_env_json,'w') as f:
