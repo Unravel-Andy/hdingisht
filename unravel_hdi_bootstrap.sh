@@ -2215,7 +2215,6 @@ function spark_postinstall_check_impl() {
 function configs_py(){
     echo "\
 #!/usr/bin/env python
-
 '''
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
@@ -2233,7 +2232,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 '''
-
 import optparse
 from optparse import OptionGroup
 import sys
@@ -2600,17 +2598,20 @@ function final_check(){
     echo "Running final_check.py in the background"
     echo "\
 from subprocess import call, check_output
-import urllib2,base64,json,argparse, re
+import urllib2,base64,json,argparse, re, base64
 from time import sleep
+import hdinsight_common.Constants as Constants
+import hdinsight_common.ClusterManifestParser as ClusterManifestParser
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-host','--unravel-host', help='Unravel Server hostname', dest='unravel', required=True)
-parser.add_argument('-user','--username', help='ambari username', required=True)
-parser.add_argument('-pass','--password', help='ambari password', required=True)
 parser.add_argument('-c','--cluster_name', help='ambari cluster name', required=True)
 parser.add_argument('-s','--spark_ver', help='spark version', required=True)
 parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
+argv.username = Constants.AMBARI_WATCHDOG_USERNAME
+base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password
+argv.password = base64.b64decode(base64pwd)
 unrave_server = argv.unravel
 argv.unravel = argv.unravel.split(':')[0]
 argv.spark_ver = argv.spark_ver.split('.')
@@ -2702,9 +2703,9 @@ def main():
         print('Spark Config is not correct')
         new_spark_def = json.loads('{' + spark_def + '}')
         for key,val in spark_defaults_configs.iteritems():
-            if key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions':
+            if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
                 new_spark_def['properties'][key] += ' ' + val
-            else:
+            elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
                 new_spark_def['properties'][key] = val
         with open(spark_def_json, 'w') as f:
             f.write(json.dumps(new_spark_def)[1:-1])
@@ -2789,7 +2790,7 @@ if __name__ == '__main__':
     main()
 
 " > /tmp/unravel/final_check.py
-    ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -user ${AMBARI_USR} -pass ${AMBARI_PWD} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
+    ( sudo nohup python /tmp/unravel/final_check.py -host ${UNRAVEL_SERVER} -l ${AMBARI_HOST} -c ${CLUSTER_ID} -s ${SPARK_VER_XYZ} > /tmp/unravel/final_check.log 2>/tmp/unravel/final_check.err &)
 }
 
 # dump the contents of env variables and shell settings

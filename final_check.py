@@ -1,15 +1,18 @@
 from subprocess import call, check_output
-import urllib2,base64,json,argparse, re
+import urllib2,base64,json,argparse, re, base64
 from time import sleep
+import hdinsight_common.Constants as Constants
+import hdinsight_common.ClusterManifestParser as ClusterManifestParser
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-host','--unravel-host', help='Unravel Server hostname', dest='unravel', required=True)
-parser.add_argument('-user','--username', help='ambari username', required=True)
-parser.add_argument('-pass','--password', help='ambari password', required=True)
 parser.add_argument('-c','--cluster_name', help='ambari cluster name', required=True)
 parser.add_argument('-s','--spark_ver', help='spark version', required=True)
 parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
+argv.username = Constants.AMBARI_WATCHDOG_USERNAME
+base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password
+argv.password = base64.b64decode(base64pwd)
 unrave_server = argv.unravel
 argv.unravel = argv.unravel.split(':')[0]
 argv.spark_ver = argv.spark_ver.split('.')
@@ -101,9 +104,9 @@ def main():
         print('Spark Config is not correct')
         new_spark_def = json.loads('{' + spark_def + '}')
         for key,val in spark_defaults_configs.iteritems():
-            if key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions':
+            if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
                 new_spark_def['properties'][key] += ' ' + val
-            else:
+            elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
                 new_spark_def['properties'][key] = val
         with open(spark_def_json, 'w') as f:
             f.write(json.dumps(new_spark_def)[1:-1])
