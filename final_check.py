@@ -6,13 +6,16 @@ import hdinsight_common.ClusterManifestParser as ClusterManifestParser
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-host','--unravel-host', help='Unravel Server hostname', dest='unravel', required=True)
-parser.add_argument('-c','--cluster_name', help='ambari cluster name', required=True)
+parser.add_argument('-user','--username', help='Ambari login username')
+parser.add_argument('-pass','--password', help='Ambari login password')
+parser.add_argument('-c','--cluster_name', help='ambari cluster name')
 parser.add_argument('-s','--spark_ver', help='spark version', required=True)
 parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
 argv.username = Constants.AMBARI_WATCHDOG_USERNAME
 base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password
 argv.password = base64.b64decode(base64pwd)
+argv.cluster_name = ClusterManifestParser.parse_local_manifest().deployment.cluster_name
 unrave_server = argv.unravel
 argv.unravel = argv.unravel.split(':')[0]
 argv.spark_ver = argv.spark_ver.split('.')
