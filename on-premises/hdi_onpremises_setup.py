@@ -234,5 +234,7 @@ def main():
 
     check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs,spark_defaults_configs,mapred_site_configs)
 
+    restart_services()
+
 if __name__ == '__main__':
     main()

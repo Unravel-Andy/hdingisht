@@ -1,7 +1,7 @@
 #! /bin/bash
 
 ################################################################################################
-# Unravel for HDInsight Bootstrap Script                                                       #
+# Unravel for HDInsight Sensory Deploy Script                                                  #
 #                                                                                              #
 # The bootstrap script log is located at /tmp/unravel                                          #
 ################################################################################################
@@ -13,20 +13,24 @@ fi
 
 SENSOR_DIR=/usr/local
 
-echo "Downloading unravel-sensor.tar.gz\n"
-wget -O $TMP_DIR/unravel-sensor.tar.gz https://github.com/unravel-data/public/raw/master/hdi/unravel-azure/unravel-sensor.tar.gz
-echo $?
+SENSOR_FILE_URL="https://github.com/unravel-data/public/raw/master/hdi/unravel-azure/unravel-sensor.tar.gz"
+
+echo -e "\nDownloading unravel-sensor.tar.gz\n"
+wget -O $TMP_DIR/unravel-sensor.tar.gz $SENSOR_FILE_URL
+
 if [ $? -eq 0 ];then
-    echo "unravel-sensor.tar.gz Downloaded\n"
+    echo -e "\nunravel-sensor.tar.gz Downloaded\n"
 else
-    echo "unravel-sensor.tar.gz download failed"
+    echo -e "\nunravel-sensor.tar.gz download failed\n"
     exit 1
 fi
 
-echo "Extracting unravel-sensor"
+echo "\nExtracting unravel-sensor.tar.gz\n"
 tar -zxvf $TMP_DIR/unravel-sensor.tar.gz -C $SENSOR_DIR/
 
 if [ -d $SENSOR_DIR/unravel-agent ] && [ -d $SENSOR_DIR/unravel_client ]; then
-    echo "Deploy Sensor successed"
-else echo "Deploy Sensor Failed"
+    echo "\nDeploy Sensor successed\n"
+else
+    echo "\nDeploy Sensor Failed\n"
+    exit 1
 fi
