@@ -24,7 +24,7 @@ argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \
 argv.hive_ver = check_output('$(which hive) --version 2>/dev/null | grep -Po \'Hive \K([0-9]+\.[0-9]+\.[0-9]+)\'',shell=True).strip()
 hosts_list = check_output('curl -s -u %s:\'%s\' -G "http://%s:8080/api/v1/clusters/%s/hosts" |grep "host_name" |awk \'{ print $3}\' |tr -d \'"\' |grep -vi zk'
                         % (argv.username, argv.password, 'headnodehost', argv.cluster_name),shell=True).strip().split('\n')
-script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/master/unravel_hdi_bootstrap.sh'
+script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/test/on-premises/hdi_premises_sensor_deploy_.sh'
 
 log_dir='/tmp/unravel/'
 spark_def_json = log_dir + 'spark-def.json'
