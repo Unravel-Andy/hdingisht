@@ -14,14 +14,19 @@ parser.add_argument('-hive','--hive_ver', help='hive version')
 parser.add_argument('-l','--am_host', help='ambari host', default='headnodehost')
 argv = parser.parse_args()
 
-sys.stderr = open(log_dir + 'onprem_setup.err','w')
-argv.unravel = check_output(['hostname', '-i']).strip()
-argv.username = Constants.AMBARI_WATCHDOG_USERNAME
-base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password
-argv.password = base64.b64decode(base64pwd)
-argv.cluster_name = ClusterManifestParser.parse_local_manifest().deployment.cluster_name
-argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
-argv.hive_ver = check_output('$(which hive) --version 2>/dev/null | grep -Po \'Hive \K([0-9]+\.[0-9]+\.[0-9]+)\'',shell=True).strip()
+if not argv.unravel:
+    argv.unravel = check_output(['hostname', '-i']).strip()
+if not argv.username:
+    argv.username = Constants.AMBARI_WATCHDOG_USERNAME
+if not argv.password:
+    base64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password
+    argv.password = base64.b64decode(base64pwd)
+if not argv.cluster_name:
+    argv.cluster_name = ClusterManifestParser.parse_local_manifest().deployment.cluster_name
+if not argv.spark_ver:
+    argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+if not argv.hive_ver:
+    argv.hive_ver = check_output('$(which hive) --version 2>/dev/null | grep -Po \'Hive \K([0-9]+\.[0-9]+\.[0-9]+)\'',shell=True).strip()
 hosts_list = check_output('curl -s -u %s:\'%s\' -G "http://%s:8080/api/v1/clusters/%s/hosts" |grep "host_name" |awk \'{ print $3}\' |tr -d \'"\' |grep -vi zk'
                         % (argv.username, argv.password, 'headnodehost', argv.cluster_name),shell=True).strip().split('\n')
 script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/test/on-premises/hdi_premises_sensor_deploy_.sh'
@@ -36,6 +41,7 @@ if not os.path.exists(log_dir):
 if not os.path.exists(log_dir + 'configs.py'):
     print('Downloading configs.py')
     urllib.urlretrieve("https://raw.githubusercontent.com/Unravel-Andy/hdingisht/master/configs.py", log_dir + "configs.py")
+sys.stderr = open(log_dir + 'onprem_setup.err','w')
 
 #####################################################################
 # Ambari Get API functions                                          #
