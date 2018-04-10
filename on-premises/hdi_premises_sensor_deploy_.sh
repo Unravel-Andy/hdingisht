@@ -15,8 +15,8 @@ SENSOR_DIR=/usr/local
 
 echo "Downloading unravel-sensor.tar.gz\n"
 wget -O $TMP_DIR/unravel-sensor.tar.gz https://github.com/unravel-data/public/raw/master/hdi/unravel-azure/unravel-sensor.tar.gz
-
-if [ -z $? ];then
+echo $?
+if [ $? -eq 0 ];then
     echo "unravel-sensor.tar.gz Downloaded\n"
 else
     echo "unravel-sensor.tar.gz download failed"
