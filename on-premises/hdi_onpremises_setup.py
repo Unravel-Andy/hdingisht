@@ -203,7 +203,7 @@ def check_running_ops():
 
 def deploy_sensor():
     call("""curl -u {0}:'{1}' -i -H 'X-Requested-By: ambari' -X POST -d \
-    '{{"RequestInfo": {{"action":"run_customscriptaction", "context" :"Unrvel: Custom Script Action","operation_level":"host_component", \
+    '{{"RequestInfo": {{"action":"run_customscriptaction", "context" :"Unrvel: Deploy Unravel Sensor","operation_level":"host_component", \
     "parameters":{{"script_location":"{2}",\
     "script_params":"","storage_account":"","storage_key":"","storage_container":"","blob_name":""}}}},\
     "Requests/resource_filters":[{{"hosts":"{3}"\
@@ -254,7 +254,7 @@ def update_config(config_name,config_key=None,config_value=None, set_file=None):
             return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a set -c {4} -k {5} -v {6}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, config_key, config_value), shell=True)
     except:
         print('\Update %s configuration failed' % config_name)
-        
+
 def main():
     core_site = get_config('core-site')
     hdfs_url = json.loads(core_site[core_site.find('properties\":')+13:])['fs.defaultFS']
