@@ -255,7 +255,7 @@ def main():
                         'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
                         'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
                         'com.unraveldata.hive.hook.tcp': 'true',
-                        'com.unraveldata.host':argv.unravel，
+                        'com.unraveldata.host':argv.unravel,
                         'hive.exec.pre.hooks': 'com.unraveldata.dataflow.hive.hook.HivePreHook',
                         'hive.exec.post.hooks': 'com.unraveldata.dataflow.hive.hook.HivePostHook',
                         'hive.exec.failure.hooks': 'com.unraveldata.dataflow.hive.hook.HiveFailHook'
