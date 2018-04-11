@@ -198,6 +198,9 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                 f.close()
             update_config('mapred-site', set_file=mapred_site_json)
 
+#####################################################################
+#   Check if any ambari operation is not finished                   #
+#####################################################################
 def check_running_ops():
     print('\nChecking Ambari Operations\n')
     while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
@@ -205,6 +208,9 @@ def check_running_ops():
         sleep(30)
     print('\nAll Operations are completed, Comparing configs\n')
 
+#####################################################################
+#   Deploy Unravel Sensor                                           #
+#####################################################################
 def deploy_sensor():
     call("""curl -u {0}:'{1}' -i -H 'X-Requested-By: ambari' -X POST -d \
     '{{"RequestInfo": {{"action":"run_customscriptaction", "context" :"Unravel: Deploy Unravel Sensor","operation_level":"host_component", \
