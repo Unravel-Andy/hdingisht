@@ -25,12 +25,12 @@ else
     exit 1
 fi
 
-echo "\nExtracting unravel-sensor.tar.gz\n"
+echo -e "\nExtracting unravel-sensor.tar.gz\n"
 tar -zxvf $TMP_DIR/unravel-sensor.tar.gz -C $SENSOR_DIR/
 
 if [ -d $SENSOR_DIR/unravel-agent ] && [ -d $SENSOR_DIR/unravel_client ]; then
-    echo "\nDeploy Sensor successed\n"
+    echo -e "\nDeploy Sensor successed\n"
 else
-    echo "\nDeploy Sensor Failed\n"
+    echo -e "\nDeploy Sensor Failed\n"
     exit 1
 fi

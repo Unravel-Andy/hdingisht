@@ -24,9 +24,13 @@ if not argv.password:
 if not argv.cluster_name:
     argv.cluster_name = ClusterManifestParser.parse_local_manifest().deployment.cluster_name
 if not argv.spark_ver:
-    argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+    try:
+        argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+    except:
+        argv.spark_ver = '2.1.0'
 if not argv.hive_ver:
     argv.hive_ver = check_output('$(which hive) --version 2>/dev/null | grep -Po \'Hive \K([0-9]+\.[0-9]+\.[0-9]+)\'',shell=True).strip()
+    argv.hive_ver = argv.hive_ver.split('.')
 hosts_list = check_output('curl -s -u %s:\'%s\' -G "http://%s:8080/api/v1/clusters/%s/hosts" |grep "host_name" |awk \'{ print $3}\' |tr -d \'"\' |grep -vi zk'
                         % (argv.username, argv.password, 'headnodehost', argv.cluster_name),shell=True).strip().split('\n')
 script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/test/on-premises/hdi_premises_sensor_deploy_.sh'
@@ -57,8 +61,12 @@ def am_req(api_name=None, full_api=None):
 # Check current configuration and update if not correct             #
 #####################################################################
 def check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs,spark_defaults_configs,mapred_site_configs):
-    core_site = get_config('core-site')
-
+    print('HDFS_URL: ' + hdfs_url)
+    print('Hive-env: ' + hive_env_content)
+    print('Hadoop-env: ' + hadoop_env_content)
+    print('hive-site: ' + str(hive_site_configs))
+    print('spark-defaults: ' + str(spark_defaults_configs))
+    print('mapred-site: ' + str(mapred_site_configs))
     # spark-default
     spark_def_ver = get_spark_defaults()
     with open(spark_def_json, 'r') as f:
@@ -87,10 +95,10 @@ def check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs
         hive_env = f.read()
         f.close()
     if hive_env_content.split(' ')[1] in hive_env:
-        print('\nAUX_CLASSPATH is in hive')
+        print('\nAUX_CLASSPATH is in hive\n')
     else:
         print(hive_env)
-        print('\nAUX_CLASSPATH is missing')
+        print('\nAUX_CLASSPATH is missing\n')
         content = hive_env[hive_env.find('\"content\": \"')+12:hive_env.find('{% endif %}\"')+11]
         new_content = json.dumps(content + '\n' + hive_env_content)[1:-1]
         sleep(2)
@@ -103,10 +111,10 @@ def check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs
     # hive-site
     hive_site = get_config('hive-site')
     if all(x in hive_site for _,x in hive_site_configs.iteritems()):
-        print('\nCustom hive-site configs are correct')
+        print('\nCustom hive-site configs are correct\n')
     else:
         print(hive_site + '\n')
-        print('\nCustom hive-site configs are missing')
+        print('\nCustom hive-site configs are missing\n')
     sleep(5)
 
     # hadoop-env
@@ -115,10 +123,10 @@ def check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs
         hadoop_env = f.read()
         f.close()
     if hadoop_env.find(hadoop_env_content.split(' ')[1]) > -1:
-        print('\nHADOOP_CLASSPATH is correct')
+        print('\nHADOOP_CLASSPATH is correct\n')
     else:
         print(hadoop_env + '\n')
-        print('\nHADOOP_CLASSPATH is missing, updating')
+        print('\nHADOOP_CLASSPATH is missing, updating\n')
         content = hadoop_env[hadoop_env.find('\"content\": \"')+12:hadoop_env.find('hdfs_user_nofile_limit')-6]
         new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
         sleep(2)
@@ -155,10 +163,11 @@ def check_configs(hdfs_url,hive_env_content,hadoop_env_content,hive_site_configs
         # update_config('mapred-site', set_file=mapred_site_json)
 
 def check_running_ops():
-    print('Checking Ambari Operations')
+    print('\nChecking Ambari Operations\n')
     while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
         print('Operations Status:' + get_latest_req_stat())
-        sleep(60)
+        sleep(30)
+    print('\nAll Operations are completed, Comparing configs\n')
 
 def deploy_sensor():
     call("""curl -u {0}:'{1}' -i -H 'X-Requested-By: ambari' -X POST -d \
