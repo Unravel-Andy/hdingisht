@@ -203,7 +203,7 @@ def check_running_ops():
 
 def deploy_sensor():
     call("""curl -u {0}:'{1}' -i -H 'X-Requested-By: ambari' -X POST -d \
-    '{{"RequestInfo": {{"action":"run_customscriptaction", "context" :"Unrvel: Deploy Unravel Sensor","operation_level":"host_component", \
+    '{{"RequestInfo": {{"action":"run_customscriptaction", "context" :"Unravel: Deploy Unravel Sensor","operation_level":"host_component", \
     "parameters":{{"script_location":"{2}",\
     "script_params":"","storage_account":"","storage_key":"","storage_container":"","blob_name":""}}}},\
     "Requests/resource_filters":[{{"hosts":"{3}"\
