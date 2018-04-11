@@ -140,6 +140,10 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                     hive_site['properties'][key] += ',' + val
                 else:
                     hive_site['properties'][key] = val
+            with open(hive_site_json,'w') as f:
+                f.write(json.dumps(hive_site)[1:-1])
+                f.close()
+            update_config('hive-site', set_file=hive_site_json)
 
         sleep(5)
 
@@ -160,7 +164,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             with open(hadoop_env_json,'w') as f:
                 f.write(hadoop_env.replace(content, new_content, 1))
                 f.close()
-            # update_config('hadoop-env', set_file=hadoop_env_json)
+            update_config('hadoop-env', set_file=hadoop_env_json)
             sleep(5)
 
     # mapred-site
