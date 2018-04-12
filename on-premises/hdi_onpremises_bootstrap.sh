@@ -20,7 +20,11 @@ if [ $? -eq 0 ];then
     echo -e "\nDownload Successed\n"
     sleep 5
     echo -e "\nRunning Setup Script in the background\n"
-    nohup python $TMP_DIR/hdi_onpremises_setup.py > $TMP_DIR/hdi_onpremises_setup.log 2>$TMP_DIR/hdi_onpremises_setup.err &
+    if [ $1 -eq 'uninstall' ];then 
+        nohup python $TMP_DIR/hdi_onpremises_setup.py uninstall> $TMP_DIR/hdi_onpremises_setup.log 2>$TMP_DIR/hdi_onpremises_setup.err &
+    else
+        nohup python $TMP_DIR/hdi_onpremises_setup.py > $TMP_DIR/hdi_onpremises_setup.log 2>$TMP_DIR/hdi_onpremises_setup.err &
+    fi
 else
     echo -e "\nDownload Failed\n"
     exit 1
