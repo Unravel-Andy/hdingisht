@@ -20,6 +20,7 @@ if [ $? -eq 0 ];then
     echo -e "\nDownload Successed\n"
     sleep 5
     echo -e "\nRunning Setup Script in the background\n"
+
     if [ $# -eq 1 ] && [ "$1" = "uninstall" ];then
         echo -e "\nUninstall Unravel\n"
         nohup python $TMP_DIR/hdi_onpremises_setup.py -uninstall> $TMP_DIR/hdi_onpremises_setup.log 2>$TMP_DIR/hdi_onpremises_setup.err &
