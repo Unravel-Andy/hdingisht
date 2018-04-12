@@ -112,6 +112,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             print('\nAUX_CLASSPATH is in hive\n')
         else:
             print('\n\nAUX_CLASSPATH is missing\n')
+
             content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hive_env).span()[1]-1]
             print('hive-env content: ', content)
             new_content = json.dumps(content + '\n' + hive_env_content)[1:-1]
@@ -164,7 +165,9 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             print('\nHADOOP_CLASSPATH is correct\n')
         else:
             print('\nHADOOP_CLASSPATH is missing, updating\n')
+
             content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hadoop_env).span()[1]-1]
+
             print('Haddop-env content: ', content)
             new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
             sleep(2)
@@ -180,6 +183,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
         with open(mapred_site_json,'r') as f:
             mapred_site = json.loads('{' + f.read() + '}')
             f.close()
+
         try:
             check_mapr_site = all(val in mapred_site['properties'][key] for key, val in mapred_site_configs.iteritems())
         except Exception as e:
@@ -261,6 +265,7 @@ def read_json(json_file_location):
         result = f.read()
         f.close()
     return result
+
 #####################################################################
 #   Restart All Required Services                                   #
 #####################################################################
