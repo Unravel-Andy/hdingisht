@@ -13,7 +13,7 @@ fi
 
 SENSOR_DIR=/usr/local
 
-SENSOR_FILE_URL="https://github.com/unravel-data/public/raw/master/hdi/unravel-azure/scripts/unravel-sensor.tar.gz"
+SENSOR_FILE_URL="https://unravelstorage01.blob.core.windows.net/unravel-app-blob-2018-04-13/unravel-sensor.tar.gz"
 
 echo -e "\nDownloading unravel-sensor.tar.gz\n"
 wget -O $TMP_DIR/unravel-sensor.tar.gz $SENSOR_FILE_URL
