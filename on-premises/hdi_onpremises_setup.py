@@ -24,11 +24,6 @@ if not argv.password:
     argv.password = base64.b64decode(base64pwd)
 if not argv.cluster_name:
     argv.cluster_name = ClusterManifestParser.parse_local_manifest().deployment.cluster_name
-if not argv.spark_ver:
-    try:
-        argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
-    except:
-        argv.spark_ver = '2.1.0'
 if not argv.hive_ver:
     argv.hive_ver = check_output('$(which hive) --version 2>/dev/null | grep -Po \'Hive \K([0-9]+\.[0-9]+\.[0-9]+)\'',shell=True).strip()
     argv.hive_ver = argv.hive_ver.split('.')
@@ -50,6 +45,44 @@ if not os.path.exists(log_dir + 'configs.py'):
     urllib.urlretrieve("https://raw.githubusercontent.com/Unravel-Andy/hdingisht/master/configs.py", log_dir + "configs.py")
 sys.stderr = open(log_dir + 'hdi_onpremises_setup.err','w')
 
+def global_var():
+    global argv, core_site, hdfs_url, hive_env_content, hadoop_env_content, hive_site_configs, spark_defaults_configs, mapred_site_configs, tez_site_configs
+    if not argv.spark_ver:
+        try:
+            argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+        except:
+            argv.spark_ver = '2.1.0'.split('.')
+    core_site = get_config('core-site')
+    hdfs_url = json.loads(core_site[core_site.find('properties\":')+13:])['fs.defaultFS']
+    hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-%s.%s.0-hook.jar' % (argv.hive_ver[0],argv.hive_ver[1])
+    hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-%s.%s.0-hook.jar' % (argv.hive_ver[0],argv.hive_ver[1])
+    hive_site_configs = {
+                        'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
+                        'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
+                        'com.unraveldata.hive.hook.tcp': 'true',
+                        'com.unraveldata.host':argv.unravel,
+                        'hive.exec.pre.hooks': 'com.unraveldata.dataflow.hive.hook.HivePreHook',
+                        'hive.exec.post.hooks': 'com.unraveldata.dataflow.hive.hook.HivePostHook',
+                        'hive.exec.failure.hooks': 'com.unraveldata.dataflow.hive.hook.HiveFailHook'
+                        }
+    spark_defaults_configs={
+                            #'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
+                            #'spark.history.fs.logDirectory':hdfs_url + '/var/log/spark/apps',
+                            'spark.unravel.server.hostport':argv.unravel+':4043',
+                            'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=driver' % (argv.spark_ver[0],argv.spark_ver[1]),
+                            'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=executor' % (argv.spark_ver[0],argv.spark_ver[1])
+                            }
+    mapred_site_configs = {
+                            'yarn.app.mapreduce.am.command-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel,
+                            'mapreduce.task.profile':'true',
+                            'mapreduce.task.profile.maps':'0-5',
+                            'mapreduce.task.profile.reduces':'0-5',
+                            'mapreduce.task.profile.params':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
+                            }
+    tez_site_configs = {
+                        'tez.am.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel,
+                        'tez.task.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel
+                        }
 #####################################################################
 # Ambari Get API functions                                          #
 #####################################################################
@@ -401,43 +434,14 @@ def write_json(json_file_location, content_write):
         f.close()
 
 def main():
-    core_site = get_config('core-site')
-    hdfs_url = json.loads(core_site[core_site.find('properties\":')+13:])['fs.defaultFS']
-    hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-%s.%s.0-hook.jar' % (argv.hive_ver[0],argv.hive_ver[1])
-    hadoop_env_content = 'export HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:/usr/local/unravel_client/unravel-hive-%s.%s.0-hook.jar' % (argv.hive_ver[0],argv.hive_ver[1])
-    hive_site_configs = {
-                        'hive.exec.driver.run.hooks': 'com.unraveldata.dataflow.hive.hook.HiveDriverHook',
-                        'com.unraveldata.hive.hdfs.dir': '/user/unravel/HOOK_RESULT_DIR',
-                        'com.unraveldata.hive.hook.tcp': 'true',
-                        'com.unraveldata.host':argv.unravel,
-                        'hive.exec.pre.hooks': 'com.unraveldata.dataflow.hive.hook.HivePreHook',
-                        'hive.exec.post.hooks': 'com.unraveldata.dataflow.hive.hook.HivePostHook',
-                        'hive.exec.failure.hooks': 'com.unraveldata.dataflow.hive.hook.HiveFailHook'
-                        }
-    spark_defaults_configs={
-                            #'spark.eventLog.dir':hdfs_url + '/var/log/spark/apps',
-                            #'spark.history.fs.logDirectory':hdfs_url + '/var/log/spark/apps',
-                            'spark.unravel.server.hostport':argv.unravel+':4043',
-                            'spark.driver.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=driver' % (argv.spark_ver[0],argv.spark_ver[1]),
-                            'spark.executor.extraJavaOptions':'-Dcom.unraveldata.client.rest.shutdown.ms=300 -javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=spark-%s.%s,config=executor' % (argv.spark_ver[0],argv.spark_ver[1])
-                            }
-    mapred_site_configs = {
-                            'yarn.app.mapreduce.am.command-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel,
-                            'mapreduce.task.profile':'true',
-                            'mapreduce.task.profile.maps':'0-5',
-                            'mapreduce.task.profile.reduces':'0-5',
-                            'mapreduce.task.profile.params':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
-                            }
-    tez_site_configs = {
-                        'tez.am.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel,
-                        'tez.task.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel
-                        }
 
     if not argv.uninstall:
         print('\nInstall Unravel\n')
         deploy_sensor()
 
         check_running_ops()
+
+        global_var()
 
         check_configs(hdfs_url=hdfs_url,
                       hive_env_content=hive_env_content,
@@ -450,6 +454,8 @@ def main():
 
     elif argv.uninstall:
         print('\nUninstall Unravel\n')
+        global_var()
+
         uninstall_unravel(hdfs_url=hdfs_url,
                           hive_env_content=hive_env_content,
                           hadoop_env_content=hadoop_env_content,
