@@ -50,9 +50,9 @@ def global_var():
     if not argv.spark_ver:
         try:
             if get_spark_defaults == 'spark2-defaults':
-                argv.spark_ver = check_output('/usr/bin/spark-submit --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+                argv.spark_ver = check_output('$(find /usr/hdp/*/spark2 -name spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
             else:
-                argv.spark_ver = check_output('/usr/bin/spark-submit --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+                argv.spark_ver = check_output('$(find /usr/hdp/*/spark -name spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
         except:
             argv.spark_ver = '2.1.0'.split('.')
     else:
