@@ -21,6 +21,8 @@ Requirement: The script need to be ran as sudo
 
 Usage: `sudo python hdi_onpremises_setup.py` or `sudo python hdi_onpremises_setup.py -uninstall`
 1. Download `configs.py` from to /tmp/unravel/
+
+ ~~2. Download `hdi_premises_sensor_deploy_.sh` and run as an Ambari task to deploy sensor on all hosts~~
 2. Get Hive and Spark version via `/usr/bin/hive --version` and `spark-submit --version` based on what spark service is installed in Ambari
 3. Get Edge node host via `hostname -i`
 4. Fill in all the configurations and compare with Ambari Configuration, update configuration if not exist/correct
