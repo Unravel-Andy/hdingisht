@@ -129,7 +129,7 @@ def main():
         print(hive_env)
         print('\nAUX_CLASSPATH is missing')
         # print(hive_env)
-        content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}\"', hive_env).span()[1]-1]
+        content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}\",', hive_env).span()[1]-2]
         new_content = json.dumps(content + '\n' + hive_env_content)[1:-1]
         sleep(2)
         with open(hive_env_json,'w') as f:
@@ -156,7 +156,7 @@ def main():
         print(hadoop_env + '\n')
         print('\nHADOOP_CLASSPATH is missing, updating')
         # print(hadoop_env)
-        content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}\"', hadoop_env).span()[1]-1]
+        content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}\",', hadoop_env).span()[1]-2]
         new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
         sleep(2)
         with open(hadoop_env_json,'w') as f:

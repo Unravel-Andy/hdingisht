@@ -42,6 +42,7 @@ hive_env_json = log_dir + 'hive-env.json'
 hive_site_json = log_dir + 'hive-site.json'
 hadoop_env_json = log_dir + 'hadoop-env.json'
 mapred_site_json = log_dir + 'mapred-site.json'
+tez_site_json = log_dir + 'tez-site.json'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 if not os.path.exists(log_dir + 'configs.py'):
@@ -62,7 +63,7 @@ def am_req(api_name=None, full_api=None):
 #####################################################################
 # Check current configuration and update if not correct             #
 #####################################################################
-def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hive_site_configs=None,spark_defaults_configs=None,mapred_site_configs=None):
+def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hive_site_configs=None,spark_defaults_configs=None,mapred_site_configs=None,tez_site_configs=None):
     print('HDFS_URL: ')
     print(hdfs_url)
     print('Hive-env: ')
@@ -79,9 +80,8 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
     # spark-default
     if spark_defaults_configs:
         spark_def_ver = get_spark_defaults()
-        with open(spark_def_json, 'r') as f:
-            spark_def = f.read()
-            f.close()
+        spark_def = read_json(spark_def_json)
+
         if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
             print(get_spark_defaults() + '\n\nSpark Config is correct\n')
         else:
@@ -96,9 +96,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                     new_spark_def['properties'][key] += ' ' + val
                 elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
                     new_spark_def['properties'][key] = val
-            with open(spark_def_json, 'w') as f:
-                f.write(json.dumps(new_spark_def)[1:-1])
-                f.close()
+            write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
             update_config(spark_def_ver, set_file=spark_def_json)
         sleep(5)
 
@@ -113,22 +111,19 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
         else:
             print('\n\nAUX_CLASSPATH is missing\n')
 
-            content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hive_env).span()[1]-1]
+            content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}",', hive_env).span()[1]-2]
             print('hive-env content: ', content)
             new_content = json.dumps(content + '\n' + hive_env_content)[1:-1]
             sleep(2)
-            with open(hive_env_json,'w') as f:
-                f.write(hive_env.replace(content, new_content, 1))
-                f.close()
+            write_json(hive_env_json, hive_env.replace(content, new_content, 1))
             update_config('hive-env', set_file=hive_env_json)
             sleep(5)
 
     # hive-site
     if hive_site_configs:
         get_config('hive-site', set_file=hive_site_json)
-        with open(hive_site_json,'r') as f:
-            hive_site = f.read()
-            f.close()
+        hive_site = read_json(hive_site_json)
+
         try:
             check_hive_site = all(x in hive_site for _,x in hive_site_configs.iteritems())
         except Exception as e:
@@ -148,41 +143,33 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                     hive_site['properties'][key] += ',' + val
                 else:
                     hive_site['properties'][key] = val
-            with open(hive_site_json,'w') as f:
-                f.write(json.dumps(hive_site)[1:-1])
-                f.close()
+            write_json(hive_site_json, json.dumps(hive_site)[1:-1])
             update_config('hive-site', set_file=hive_site_json)
-
         sleep(5)
 
     # hadoop-env
     if hadoop_env_content:
         get_config('hadoop-env', set_file=hadoop_env_json)
-        with open(hadoop_env_json,'r') as f:
-            hadoop_env = f.read()
-            f.close()
+        hadoop_env = read_json(hadoop_env_json)
+
         if hadoop_env.find(hadoop_env_content.split(' ')[1]) > -1:
             print('\nHADOOP_CLASSPATH is correct\n')
         else:
             print('\nHADOOP_CLASSPATH is missing, updating\n')
 
-            content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hadoop_env).span()[1]-1]
+            content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}",', hadoop_env).span()[1]-2]
 
             print('Haddop-env content: ', content)
             new_content = json.dumps(content + '\n' + hadoop_env_content)[1:-1]
             sleep(2)
-            with open(hadoop_env_json,'w') as f:
-                f.write(hadoop_env.replace(content, new_content, 1))
-                f.close()
+            write_json(hadoop_env_json, hadoop_env.replace(content, new_content, 1))
             update_config('hadoop-env', set_file=hadoop_env_json)
-            sleep(5)
+        sleep(5)
 
     # mapred-site
     if mapred_site_configs:
         get_config('mapred-site',set_file=mapred_site_json)
-        with open(mapred_site_json,'r') as f:
-            mapred_site = json.loads('{' + f.read() + '}')
-            f.close()
+        mapred_site = json.loads('{' + read_json(mapred_site_json) + '}')
 
         try:
             check_mapr_site = all(val in mapred_site['properties'][key] for key, val in mapred_site_configs.iteritems())
@@ -202,11 +189,26 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                     mapred_site['properties'][key] += ' ' + val
                 else:
                     mapred_site['properties'][key] = val
-
-            with open(mapred_site_json,'w') as f:
-                f.write(json.dumps(mapred_site)[1:-1])
-                f.close()
+            write_json(mapred_site_json, json.dumps(mapred_site)[1:-1])
             update_config('mapred-site', set_file=mapred_site_json)
+        sleep(5)
+
+    #tez-site
+    if tez_site_configs:
+        get_config('tez-site', set_file=tez_site_json)
+        tez_site = json.loads('{' + read_json(tez_site_json) + '}')
+        make_change = False
+        for key,val in tez_site_configs.iteritems():
+            if val in tez_site['properties'][key]:
+                print(key + 'is correct')
+            else:
+                print(key + 'is not correct')
+                tez_site['properties'][key] += ' ' + val
+                make_change = True
+        if make_change:
+            write_json(tez_site_json, json.dumps(tez_site)[1:-1])
+            update_config('tez-site', set_file=tez_site_json)
+
 
 #####################################################################
 #   Check if any ambari operation is not finished                   #
@@ -260,6 +262,9 @@ def get_spark_defaults():
         spark_defaults = check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark2-defaults')
 
+#####################################################################
+#   Read the JSON file and return the plain text                    #
+#####################################################################
 def read_json(json_file_location):
     with open(json_file_location,'r') as f:
         result = f.read()
@@ -272,7 +277,7 @@ def read_json(json_file_location):
 def restart_services():
     call('curl -u {0}:\'{1}\' -i -H \'X-Requested-By: ambari\' -X POST -d \'{{\"RequestInfo\": {{\"command\":\"RESTART\",\"context\" :\"Unravel request: Restart Services\",\"operation_level\":\"host_component\"}},\"Requests/resource_filters\":[{{\"hosts_predicate\":\"HostRoles/stale_configs=true\"}}]}}\' http://{2}:8080/api/v1/clusters/{3}/requests > /tmp/Restart.out 2> /tmp/Restart.err < /dev/null &'.format(argv.username, argv.password, argv.am_host, argv.cluster_name),shell=True)
 
-def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hive_site_configs=None,spark_defaults_configs=None,mapred_site_configs=None):
+def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hive_site_configs=None,spark_defaults_configs=None,mapred_site_configs=None,tez_site_configs=None):
     # hive-env
     if hive_env_content:
         get_config('hive-env', set_file=hive_env_json)
@@ -280,7 +285,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
         if hive_env_content.split(' ')[1] in hive_env:
             print('\nAUX_CLASSPATH is in hive\n')
             print('\nRemoving AUX_CLASSPATH\n')
-            content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hive_env).span()[1]-1]
+            content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}",', hive_env).span()[1]-2]
             new_content = json.dumps(content.replace(hive_env_content,''))[1:-1]
             write_json(hive_env_json,hive_env.replace(content, new_content, 1))
             update_config('hive-env', set_file=hive_env_json)
@@ -290,8 +295,8 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
         get_config('hadoop-env', set_file=hadoop_env_json)
         hadoop_env = read_json(hadoop_env_json)
         if hadoop_env.find(hadoop_env_content.split(' ')[1]) > -1:
-            print('\nHADOOP_CLASSPATH exists\n')
-            content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}"', hadoop_env).span()[1]-1]
+            print('\nHADOOP_CLASSPATH exists\nRemoving configs\n')
+            content = hadoop_env[hadoop_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}",', hadoop_env).span()[1]-2]
             print('Haddop-env content: ', content)
             new_content = json.dumps(content.replace(hadoop_env_content,''))[1:-1]
             sleep(2)
@@ -308,7 +313,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
             print(e)
             check_hive_site = False
         if check_hive_site:
-            print('\nCustom hive-site configs exists\n')
+            print('\nCustom hive-site configs exists\nRemoving configs\n')
             hive_site = json.loads('{' + hive_site + '}')
             for key,val in hive_site_configs.iteritems():
                 try:
@@ -321,14 +326,14 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
                     hive_site['properties'].pop(key, None)
             write_json(hive_site_json, json.dumps(hive_site)[1:-1])
             update_config('hive-site', set_file=hive_site_json)
-
         sleep(5)
+
     #spark1/2-defaults
     if spark_defaults_configs:
         spark_def_ver = get_spark_defaults()
         spark_def = read_json(spark_def_json)
         if any(x in spark_def for _,x in spark_defaults_configs.iteritems()):
-            print(get_spark_defaults() + '\n\nSpark Config exists\n')
+            print(get_spark_defaults() + '\n\nSpark Config exists\nRemoving configs\n')
             new_spark_def = json.loads('{' + spark_def + '}')
             for key,val in spark_defaults_configs.iteritems():
                 try:
@@ -342,6 +347,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
             write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
             update_config(spark_def_ver, set_file=spark_def_json)
         sleep(5)
+
     #mapred-site
     if mapred_site_configs:
         get_config('mapred-site',set_file=mapred_site_json)
@@ -352,7 +358,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
             print(e)
             check_mapr_site = False
         if check_mapr_site:
-            print('\nmapred-site configs exist')
+            print('\nmapred-site configs exist\nRemoving configs\n')
             for key,val in mapred_site_configs.iteritems():
                 try:
                     print(key+': ',mapred_site['properties'][key])
@@ -364,6 +370,21 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
                     mapred_site['properties'].pop(key, None)
             write_json(mapred_site_json, json.dumps(mapred_site)[1:-1])
             update_config('mapred-site', set_file=mapred_site_json)
+
+    #tez-site
+    if tez_site_configs:
+        get_config('tez-site', set_file=tez_site_json)
+        tez_site = json.loads('{' + read_json(tez_site_json) + '}')
+        make_change = False
+        for key,val in tez_site_configs.iteritems():
+            if val in tez_site['properties'][key]:
+                print(key + 'exists\nRemoving config')
+                tez_site['properties'][key] = tez_site['properties'][key].replace(' ' + val, '')
+                make_change = True
+        if make_change:
+            write_json(tez_site_json, json.dumps(tez_site)[1:-1])
+            update_config('tez-site', set_file=tez_site_json)
+        sleep(5)
 
 def update_config(config_name,config_key=None,config_value=None, set_file=None):
     try:
@@ -407,9 +428,13 @@ def main():
                             'mapreduce.task.profile.reduces':'0-5',
                             'mapreduce.task.profile.params':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=%s:4043' % argv.unravel
                             }
+    tez_site_configs = {
+                        'tez.am.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel,
+                        'tez.task.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel
+                        }
 
     if not argv.uninstall:
-
+        print('\nInstall Unravel\n')
         deploy_sensor()
 
         check_running_ops()
@@ -422,8 +447,9 @@ def main():
                       mapred_site_configs=mapred_site_configs)
 
         restart_services()
-    elif argv.uninstall:
 
+    elif argv.uninstall:
+        print('\nUninstall Unravel\n')
         uninstall_unravel(hdfs_url=hdfs_url,
                           hive_env_content=hive_env_content,
                           hadoop_env_content=hadoop_env_content,
