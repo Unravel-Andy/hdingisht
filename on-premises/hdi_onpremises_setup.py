@@ -29,7 +29,7 @@ if not argv.hive_ver:
     argv.hive_ver = argv.hive_ver.split('.')
 hosts_list = check_output('curl -s -u %s:\'%s\' -G "http://%s:8080/api/v1/clusters/%s/hosts" |grep "host_name" |awk \'{ print $3}\' |tr -d \'"\' |grep -vi zk'
                         % (argv.username, argv.password, 'headnodehost', argv.cluster_name),shell=True).strip().split('\n')
-script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/test/on-premises/hdi_premises_sensor_deploy_.sh'
+script_location = 'https://raw.githubusercontent.com/Unravel-Andy/hdingisht/master/on-premises/hdi_premises_sensor_deploy_.sh'
 
 log_dir='/tmp/unravel/'
 spark_def_json = log_dir + 'spark-def.json'
@@ -49,9 +49,14 @@ def global_var():
     global argv, core_site, hdfs_url, hive_env_content, hadoop_env_content, hive_site_configs, spark_defaults_configs, mapred_site_configs, tez_site_configs
     if not argv.spark_ver:
         try:
-            argv.spark_ver = check_output('$(which spark-submit) --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+            if get_spark_defaults == 'spark2-defaults':
+                argv.spark_ver = check_output('/usr/bin/spark-submit --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
+            else:
+                argv.spark_ver = check_output('/usr/bin/spark-submit --version 2>&1 | grep -oP \'.*?version\s+\K([0-9.]+)\'',shell=True).split('\n')[0].split('.')
         except:
             argv.spark_ver = '2.1.0'.split('.')
+    else:
+        argv.spark_ver = argv.spark_ver.split('.')
     core_site = get_config('core-site')
     hdfs_url = json.loads(core_site[core_site.find('properties\":')+13:])['fs.defaultFS']
     hive_env_content = 'export AUX_CLASSPATH=${AUX_CLASSPATH}:/usr/local/unravel_client/unravel-hive-%s.%s.0-hook.jar' % (argv.hive_ver[0],argv.hive_ver[1])
@@ -83,6 +88,7 @@ def global_var():
                         'tez.am.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel,
                         'tez.task.launch.cmd-opts':'-javaagent:/usr/local/unravel-agent/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=%s:4043' % argv.unravel
                         }
+
 #####################################################################
 # Ambari Get API functions                                          #
 #####################################################################
@@ -434,14 +440,12 @@ def write_json(json_file_location, content_write):
         f.close()
 
 def main():
-
+    global_var()
     if not argv.uninstall:
         print('\nInstall Unravel\n')
         deploy_sensor()
 
         check_running_ops()
-
-        global_var()
 
         check_configs(hdfs_url=hdfs_url,
                       hive_env_content=hive_env_content,
@@ -450,11 +454,8 @@ def main():
                       spark_defaults_configs=spark_defaults_configs,
                       mapred_site_configs=mapred_site_configs)
 
-        restart_services()
-
     elif argv.uninstall:
         print('\nUninstall Unravel\n')
-        global_var()
 
         uninstall_unravel(hdfs_url=hdfs_url,
                           hive_env_content=hive_env_content,
@@ -463,7 +464,7 @@ def main():
                           spark_defaults_configs=spark_defaults_configs,
                           mapred_site_configs=mapred_site_configs)
 
-        restart_services()
+    restart_services()
 
 if __name__ == '__main__':
     main()
