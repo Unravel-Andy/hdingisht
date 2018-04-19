@@ -262,7 +262,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 #####################################################################
 def check_running_ops():
     print('\nChecking Ambari Operations\n')
-    while(get_latest_req_stat() not in ['COMPLETED','FAILED']):
+    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
         print('Operations Status:' + get_latest_req_stat())
         sleep(30)
     print('\nAll Operations are completed, Comparing configs\n')
@@ -303,11 +303,11 @@ def get_latest_req_stat():
 #####################################################################
 def get_spark_defaults():
     try:
-        spark_defaults =check_output('python /usr/local/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
-        return ('spark-defaults')
-    except:
         spark_defaults = check_output('python /usr/local/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark2-defaults')
+    except:
+        spark_defaults =check_output('python /usr/local/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+        return ('spark-defaults')
 
 #####################################################################
 #   Read the JSON file and return the plain text                    #
@@ -372,6 +372,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
                     print(key+': ', hive_site['properties'][key])
                 except:
                     print (key+': ', 'None')
+                    continue
                 if re.match('hive.exec.(pre|post|failure).hooks', key) and val in hive_site['properties'][key]:
                     hive_site['properties'][key] = hive_site['properties'][key].replace(','+val,'')
                 else:
@@ -392,6 +393,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
                     print (key+': ',new_spark_def['properties'][key])
                 except:
                     print (key+': ', 'None')
+                    continue
                 if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val in spark_def:
                     new_spark_def['properties'][key] = new_spark_def['properties'][key].replace(' '+val,'')
                 elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
@@ -416,6 +418,7 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
                     print(key+': ',mapred_site['properties'][key])
                 except:
                     print (key+': ', 'None')
+                    continue
                 if key == 'yarn.app.mapreduce.am.command-opts' and val in mapred_site['properties'][key]:
                     mapred_site['properties'][key] = mapred_site['properties'][key].replace(' ' + val,'')
                 else:
@@ -470,7 +473,7 @@ def main():
         print('\nInstall Unravel\n')
         #deploy_sensor()
 
-        check_running_ops()
+        # check_running_ops()
 
         check_configs(hdfs_url=hdfs_url,
                       hive_env_content=hive_env_content,

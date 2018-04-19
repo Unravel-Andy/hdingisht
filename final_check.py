@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #v1.1.0
 from subprocess import call, check_output
-import urllib2,base64,json,argparse, re, base64
+import json,argparse, re, base64
 from time import sleep
 import hdinsight_common.Constants as Constants
 import hdinsight_common.ClusterManifestParser as ClusterManifestParser
@@ -150,7 +150,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 
     # mapred-site
     if mapred_site_configs:
-        get_config('mapred-site',set_file=mapred_site_json)
+        get_config('mapred-site', set_file=mapred_site_json)
         mapred_site = json.loads(read_json(mapred_site_json))
 
         try:
