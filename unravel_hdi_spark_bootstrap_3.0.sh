@@ -2734,7 +2734,7 @@ parser.add_argument('-host','--unravel-host', help='Unravel Server hostname', de
 parser.add_argument('-user','--username', help='Ambari login username')
 parser.add_argument('-pass','--password', help='Ambari login password')
 parser.add_argument('-c','--cluster_name', help='ambari cluster name')
-parser.add_argument('-s','--spark_ver', help='spark version', required=True)
+parser.add_argument('-s','--spark_ver', help='spark version')
 parser.add_argument('-hive','--hive_ver', help='hive version', required=True)
 parser.add_argument('-l','--am_host', help='ambari host', required=True)
 argv = parser.parse_args()
@@ -2785,6 +2785,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             spark_def_ver = get_spark_defaults()
             if not spark_def_ver:
             spark_def = read_json(spark_def_json)
+
             if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
                 print(get_spark_defaults() + '\n\nSpark Config is correct\n')
             else:
