@@ -155,7 +155,6 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
     if mapred_site_configs:
         get_config('mapred-site', set_file=mapred_site_json)
 
-        mapred_site = json.loads(read_json(mapred_site_json))
 
         try:
             check_mapr_site = all(val in mapred_site['properties'][key] for key, val in mapred_site_configs.iteritems())
