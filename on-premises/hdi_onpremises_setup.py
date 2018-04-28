@@ -386,24 +386,27 @@ def uninstall_unravel(hdfs_url=None,hive_env_content=None,hadoop_env_content=Non
 
     #spark1/2-defaults
     if spark_defaults_configs:
-        spark_def_ver = get_spark_defaults()
-        spark_def = read_json(spark_def_json)
-        if any(x in spark_def for _,x in spark_defaults_configs.iteritems()):
-            print(get_spark_defaults() + '\n\nSpark Config exists\nRemoving configs\n')
-            new_spark_def = json.loads('{' + spark_def + '}')
-            for key,val in spark_defaults_configs.iteritems():
-                try:
-                    print (key+': ',new_spark_def['properties'][key])
-                except:
-                    print (key+': ', 'None')
-                    continue
-                if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val in spark_def:
-                    new_spark_def['properties'][key] = new_spark_def['properties'][key].replace(' '+val,'')
-                elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
-                    new_spark_def['properties'].pop(key, None)
-            write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
-            update_config(spark_def_ver, set_file=spark_def_json)
-        sleep(5)
+        try:
+            spark_def_ver = get_spark_defaults()
+            spark_def = read_json(spark_def_json)
+            if any(x in spark_def for _,x in spark_defaults_configs.iteritems()):
+                print(get_spark_defaults() + '\n\nSpark Config exists\nRemoving configs\n')
+                new_spark_def = json.loads('{' + spark_def + '}')
+                for key,val in spark_defaults_configs.iteritems():
+                    try:
+                        print (key+': ',new_spark_def['properties'][key])
+                    except:
+                        print (key+': ', 'None')
+                        continue
+                    if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val in spark_def:
+                        new_spark_def['properties'][key] = new_spark_def['properties'][key].replace(' '+val,'')
+                    elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
+                        new_spark_def['properties'].pop(key, None)
+                write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
+                update_config(spark_def_ver, set_file=spark_def_json)
+            sleep(5)
+        except:
+            pass
 
     #mapred-site
     if mapred_site_configs:
