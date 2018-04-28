@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 #v1.0.1
-=======
-#v1.0.0
->>>>>>> master
 from time import sleep
 from subprocess import call, check_output
 import base64, json, argparse, re, os, urllib, sys
@@ -310,12 +306,6 @@ def get_latest_req_stat():
 #####################################################################
 def get_spark_defaults():
     try:
-<<<<<<< HEAD
-=======
-        spark_defaults =check_output('python /usr/local/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
-        return ('spark-defaults')
-    except:
->>>>>>> master
         spark_defaults = check_output('python /usr/local/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark2-defaults')
     except:
