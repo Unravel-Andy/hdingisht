@@ -2724,7 +2724,7 @@ function final_check(){
 #!/usr/bin/env python
 #v1.1.0
 from subprocess import call, check_output
-import urllib2,base64,json,argparse, re, base64
+import json,argparse, re, base64
 from time import sleep
 import hdinsight_common.Constants as Constants
 import hdinsight_common.ClusterManifestParser as ClusterManifestParser
@@ -2781,27 +2781,30 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 
     # spark-default
     if spark_defaults_configs:
-        spark_def_ver = get_spark_defaults()
-        spark_def = read_json(spark_def_json)
-
-        if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
-            print(get_spark_defaults() + '\n\nSpark Config is correct\n')
-        else:
-            print('\n\nSpark Config is not correct\n')
-            new_spark_def = json.loads(spark_def)
-            for key,val in spark_defaults_configs.iteritems():
-                try:
-                    print (key+': ',new_spark_def['properties'][key])
-                    if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
-                        new_spark_def['properties'][key] += ' ' + val
-                    elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
+        try:
+            spark_def_ver = get_spark_defaults()
+            if not spark_def_ver:
+            spark_def = read_json(spark_def_json)
+            if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
+                print(get_spark_defaults() + '\n\nSpark Config is correct\n')
+            else:
+                print('\n\nSpark Config is not correct\n')
+                new_spark_def = json.loads(spark_def)
+                for key,val in spark_defaults_configs.iteritems():
+                    try:
+                        print (key+': ',new_spark_def['properties'][key])
+                        if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
+                            new_spark_def['properties'][key] += ' ' + val
+                        elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
+                            new_spark_def['properties'][key] = val
+                    except:
+                        print (key+': ', 'None')
                         new_spark_def['properties'][key] = val
-                except:
-                    print (key+': ', 'None')
-                    new_spark_def['properties'][key] = val
-            write_json(spark_def_json, json.dumps(new_spark_def))
-            update_config(spark_def_ver, set_file=spark_def_json)
-        sleep(5)
+                write_json(spark_def_json, json.dumps(new_spark_def))
+                update_config(spark_def_ver, set_file=spark_def_json)
+            sleep(5)
+        except:
+            pass
 
     # hive-env
     if hive_env_content:
@@ -2813,6 +2816,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             print('\n\nAUX_CLASSPATH is missing\n')
             hive_env = json.loads(hive_env)
             content = hive_env['properties']['content']
+            #content = hive_env[hive_env.find('\"content\": \"')+12:re.search('{% endif %}(\s*?\n*?.*?){0,}\",', hive_env).span()[1]-2]
             print('hive-env content: ', content)
             hive_env['properties']['content'] = content + '\n' + hive_env_content
             sleep(2)
@@ -2872,7 +2876,7 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 
     # mapred-site
     if mapred_site_configs:
-        get_config('mapred-site',set_file=mapred_site_json)
+        get_config('mapred-site', set_file=mapred_site_json)
         mapred_site = json.loads(read_json(mapred_site_json))
 
         try:
@@ -2928,8 +2932,11 @@ def get_spark_defaults():
         spark_defaults =check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
         return ('spark-defaults')
     except:
-        spark_defaults = check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
-        return ('spark2-defaults')
+        try:
+            spark_defaults = check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c spark2-defaults -f {4}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, spark_def_json), shell=True)
+            return ('spark2-defaults')
+        except:
+            return('None')
 
 #####################################################################
 #   Read the JSON file and return the plain text                    #
@@ -2986,7 +2993,6 @@ tez_site_configs = {
 
 def main():
     sleep(30)
-    print('Checking Ambari Operations')
     # print('Checking Ambari Operations')
     # while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
     #     print('Operations Status:' + get_latest_req_stat())
@@ -2994,6 +3000,7 @@ def main():
     # print('All Operations are completed, Comparing configs')
 
     check_configs(
+                  hdfs_url=hdfs_url,
                   hive_env_content=hive_env_content,
                   hadoop_env_content=hadoop_env_content,
                   hive_site_configs=hive_site_configs,
