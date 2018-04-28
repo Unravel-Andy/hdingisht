@@ -2722,11 +2722,7 @@ function final_check(){
     echo "Running final_check.py in the background"
     echo "\
 #!/usr/bin/env python
-<<<<<<< HEAD:unravel_hdi_spark_bootstrap_3.0_nodep.sh
 #v1.1.1
-=======
-#v1.1.0
->>>>>>> master:unravel_hdi_bootstrap.sh
 from subprocess import call, check_output
 import urllib2,base64,json,argparse, re, base64
 from time import sleep
@@ -2785,7 +2781,6 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 
     # spark-default
     if spark_defaults_configs:
-<<<<<<< HEAD:unravel_hdi_spark_bootstrap_3.0_nodep.sh
         try:
             spark_def_ver = get_spark_defaults()
             spark_def = read_json(spark_def_json)
@@ -2810,29 +2805,6 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
             sleep(5)
         except:
             pass
-=======
-        spark_def_ver = get_spark_defaults()
-        spark_def = read_json(spark_def_json)
-
-        if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
-            print(get_spark_defaults() + '\n\nSpark Config is correct\n')
-        else:
-            print('\n\nSpark Config is not correct\n')
-            new_spark_def = json.loads(spark_def)
-            for key,val in spark_defaults_configs.iteritems():
-                try:
-                    print (key+': ',new_spark_def['properties'][key])
-                    if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
-                        new_spark_def['properties'][key] += ' ' + val
-                    elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
-                        new_spark_def['properties'][key] = val
-                except:
-                    print (key+': ', 'None')
-                    new_spark_def['properties'][key] = val
-            write_json(spark_def_json, json.dumps(new_spark_def))
-            update_config(spark_def_ver, set_file=spark_def_json)
-        sleep(5)
->>>>>>> master:unravel_hdi_bootstrap.sh
 
     # hive-env
     if hive_env_content:
@@ -3018,17 +2990,10 @@ tez_site_configs = {
 def main():
     sleep(30)
     print('Checking Ambari Operations')
-<<<<<<< HEAD:unravel_hdi_spark_bootstrap_3.0_nodep.sh
     #while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
     #    print('Operations Status:' + get_latest_req_stat())
     #    sleep(60)
     #print('All Operations are completed, Comparing configs')
-=======
-    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
-        print('Operations Status:' + get_latest_req_stat())
-        sleep(60)
-    print('All Operations are completed, Comparing configs')
->>>>>>> master:unravel_hdi_bootstrap.sh
 
     check_configs(
                   hive_env_content=hive_env_content,
