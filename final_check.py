@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#v1.1.0
+#v1.1.1
 from subprocess import call, check_output
 import json,argparse, re, base64
 from time import sleep

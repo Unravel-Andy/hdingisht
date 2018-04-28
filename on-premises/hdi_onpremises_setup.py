@@ -1,4 +1,4 @@
-#v1.0.0
+#v1.0.1
 from time import sleep
 from subprocess import call, check_output
 import base64, json, argparse, re, os, urllib, sys
@@ -126,26 +126,29 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
 
     # spark-default
     if spark_defaults_configs:
-        spark_def_ver = get_spark_defaults()
-        spark_def = read_json(spark_def_json)
+        try:
+            spark_def_ver = get_spark_defaults()
+            spark_def = read_json(spark_def_json)
 
-        if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
-            print(get_spark_defaults() + '\n\nSpark Config is correct\n')
-        else:
-            print('\n\nSpark Config is not correct\n')
-            new_spark_def = json.loads('{' + spark_def + '}')
-            for key,val in spark_defaults_configs.iteritems():
-                try:
-                    print (key+': ',new_spark_def['properties'][key])
-                except:
-                    print (key+': ', 'None')
-                if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
-                    new_spark_def['properties'][key] += ' ' + val
-                elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
-                    new_spark_def['properties'][key] = val
-            write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
-            update_config(spark_def_ver, set_file=spark_def_json)
-        sleep(5)
+            if all(x in spark_def for _,x in spark_defaults_configs.iteritems()):
+                print(get_spark_defaults() + '\n\nSpark Config is correct\n')
+            else:
+                print('\n\nSpark Config is not correct\n')
+                new_spark_def = json.loads('{' + spark_def + '}')
+                for key,val in spark_defaults_configs.iteritems():
+                    try:
+                        print (key+': ',new_spark_def['properties'][key])
+                    except:
+                        print (key+': ', 'None')
+                    if (key == 'spark.driver.extraJavaOptions' or key == 'spark.executor.extraJavaOptions') and val not in spark_def:
+                        new_spark_def['properties'][key] += ' ' + val
+                    elif key != 'spark.driver.extraJavaOptions' and key != 'spark.executor.extraJavaOptions':
+                        new_spark_def['properties'][key] = val
+                write_json(spark_def_json, json.dumps(new_spark_def)[1:-1])
+                update_config(spark_def_ver, set_file=spark_def_json)
+            sleep(5)
+        except:
+            pass
 
     # hive-env
     if hive_env_content:
