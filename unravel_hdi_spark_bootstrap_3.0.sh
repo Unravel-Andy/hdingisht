@@ -2887,11 +2887,15 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
         if check_mapr_site:
             print('\nmapred-site correct')
         else:
-            print('\n\nmapr-site missing')
             for key,val in mapred_site_configs.iteritems():
+                prop_regex = '-javaagent:.*/jars/btrace-agent.jar=libs=mr -Dunravel.server.hostport=.*:[0-9]{1,5}'
                 try:
                     print(key+': ',mapred_site['properties'][key])
-                    if val not in mapred_site['properties'][key]:
+                    if re.search(prop_regex, mapred_site['properties'][key]):
+                        print('\n\nmapr-site is incorrect updating property')
+                        mapred_site['properties'][key] = re.sub(prop_regex, val, mapred_site['properties'][key])
+                    elif val not in mapred_site['properties'][key]:
+                        print('\n\nmapr-site missing adding property')
                         mapred_site['properties'][key] += ' ' + val
                 except:
                     print (key+': ', 'None')
@@ -2906,10 +2910,15 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
         tez_site = json.loads(read_json(tez_site_json))
         make_change = False
         for key,val in tez_site_configs.iteritems():
+            prop_regex = '-javaagent:.*/jars/btrace-agent.jar=libs=mr,config=tez -Dunravel.server.hostport=.*:[0-9]{1,5}'
             if val in tez_site['properties'][key]:
                 print(key + 'is correct')
+            elif re.search(prop_regex, tez_site['properties'][key]):
+                print(key + 'is not correct updating unravel tez properties')
+                tez_site['properties'][key] = re.sub(prop_regex, val, tez_site['properties'][key])
+                make_change = True
             else:
-                print(key + 'is not correct')
+                print(key + 'is missing add unravel tez properties')
                 tez_site['properties'][key] += ' ' + val
                 make_change = True
         if make_change:
@@ -2990,7 +2999,7 @@ tez_site_configs = {
                     }
 
 def main():
-    sleep(30)
+    sleep(60)
     # print('Checking Ambari Operations')
     # while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
     #     print('Operations Status:' + get_latest_req_stat())
