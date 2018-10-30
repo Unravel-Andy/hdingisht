@@ -2930,6 +2930,11 @@ def get_latest_req_stat():
     latest_cluster_req = cluster_requests['items'][-1]['href']
     return (am_req(full_api=latest_cluster_req)['Requests']['request_status'])
 
+def get_latest_req_context():
+    cluster_requests = am_req(api_name='requests')
+    latest_cluster_req = cluster_requests['items'][-1]['href']
+    return (am_req(full_api=latest_cluster_req)['Requests']['request_context'])
+
 def get_config(config_name, set_file=None):
     if set_file:
         return check_output('python /tmp/unravel/configs.py -l {0} -u {1} -p \'{2}\' -n {3} -a get -c {4} -f {5}'.format(argv.am_host, argv.username, argv.password, argv.cluster_name, config_name, set_file), shell=True)
@@ -3001,7 +3006,7 @@ tez_site_configs = {
 def main():
     sleep(35)
     print('Checking Ambari Operations')
-    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED']):
+    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED'] and get_latest_req_name() != 'run_customscriptaction'):
         print('Operations Status:' + get_latest_req_stat())
         sleep(60)
     print('All Operations are completed, Comparing configs')
