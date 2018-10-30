@@ -3006,7 +3006,7 @@ tez_site_configs = {
 def main():
     sleep(35)
     print('Checking Ambari Operations')
-    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED'] and get_latest_req_name() != 'run_customscriptaction'):
+    while(get_latest_req_stat() not in ['COMPLETED','FAILED','ABORTED'] and get_latest_req_context() != 'run_customscriptaction'):
         print('Operations Status:' + get_latest_req_stat())
         sleep(60)
     print('All Operations are completed, Comparing configs')
