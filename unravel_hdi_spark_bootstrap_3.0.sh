@@ -2844,6 +2844,8 @@ def check_configs(hdfs_url=None,hive_env_content=None,hadoop_env_content=None,hi
                     print(key+': ', hive_site['properties'][key])
                     if re.match('hive.exec.(pre|post|failure).hooks', key) and val not in hive_site['properties'][key]:
                         hive_site['properties'][key] += ',' + val
+                    elif re.match('hive.exec.(pre|post|failure).hooks', key):
+                        pass
                     else:
                         hive_site['properties'][key] = val
                 except:
@@ -3018,6 +3020,7 @@ def main():
                   hive_site_configs=hive_site_configs,
                   spark_defaults_configs=spark_defaults_configs,
                   mapred_site_configs=mapred_site_configs,
+                  tez_site_configs=tez_site_configs
                  )
 
     restart_services()
